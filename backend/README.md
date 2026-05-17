@@ -37,7 +37,7 @@ A redesigned PPT generation system tackling Savra's core problems: cost, reliabi
 - No authentication. Add JWT for production deployments.
 - Single-instance only. Multi-instance deployments require shared cache (Redis).
 
-See [design-doc.md](design-doc.md) and [DECISIONS.md](DECISIONS.md) for detailed architecture reasoning.
+See [architecture/design-doc.md](../architecture/design-doc.md) and [DECISIONS.md](../DECISIONS.md) for detailed architecture reasoning.
 
 ## Running the Backend
 
@@ -76,24 +76,29 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 ```
 savra_task/
+├── architecture/
+│   ├── design-doc.md        ← Full system architecture & design decisions
+│   └── Diagram.png          ← Architecture diagram visualization
 ├── backend/
 │   ├── main.py              ← FastAPI app, Groq client, job processor
 │   ├── router.py            ← Smart model routing (complexity scoring)
 │   ├── cache.py             ← Exact-match cache with 8-hour TTL
 │   ├── models.py            ← Pydantic request/response schemas
 │   ├── requirements.txt      ← Python dependencies
-│   ├── design-doc.md        ← Full system architecture & design decisions
-│   ├── DECISIONS.md         ← Why each non-obvious choice was made
-│   └── diagram.mmd          ← Architecture diagram (Mermaid format)
+│   ├── README.md            ← Backend-specific documentation
+│   ├── run_tests.py         ← Test suite runner
+│   └── test_*.py            ← Unit and integration tests
 ├── frontend/
+│   ├── src/                 ← React/Vue/frontend source code
 │   ├── static/
 │   │   ├── js/
 │   │   │   └── verification.js  ← API integration & response handling
 │   │   └── css/
 │   │       └── results.css      ← UI styling & animations
 │   └── index.html           ← Main interface
+├── DECISIONS.md             ← Key architectural decisions and rationale
 ├── .env                     ← Configuration (Groq API key, model names)
-└── README.md                ← This file
+└── README.md                ← Project root documentation
 ```
 
 ## Testing
@@ -129,7 +134,7 @@ python test_backend.py      # Comprehensive pytest suite
 - 20% of requests → `llama-3.3-70b-versatile` @ $0.59/1M tokens = ~₹0.25/PPT
 - **Average**: (0.80 × ₹0.02) + (0.20 × ₹0.25) = **₹0.07/PPT**
 
-See [design-doc.md](design-doc.md) for detailed calculations.
+See [architecture/design-doc.md](../architecture/design-doc.md) for detailed calculations.
 
 ## API Request/Response Examples
 
