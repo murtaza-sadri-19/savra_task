@@ -511,22 +511,22 @@ if __name__ == "__main__":
         print("\nRunning basic sanity checks instead...")
         
         # Basic sanity checks
-        print("\n✓ Testing model validation...")
+        print("\n[PASSED] Testing model validation...")
         req = PPTRequest(topic="Test", grade=8, slides=5, subject="Math")
         print(f"  Created request: {req.topic}, Grade {req.grade}")
         
-        print("\n✓ Testing routing...")
+        print("\n[PASSED] Testing routing...")
         decision = route("Quantum Mechanics", 12, 20, "Physics")
         print(f"  Routed to {decision.model} (score={decision.score})")
         
-        print("\n✓ Testing cache...")
+        print("\n[PASSED] Testing cache...")
         cache = PPTCache()
         cache.set("Topic", 8, 5, "Math", {"title": "Test"})
         result = cache.get("Topic", 8, 5, "Math")
         print(f"  Cache hit: {result is not None}")
         
-        print("\n✓ Testing mock generation...")
+        print("\n[PASSED] Testing mock generation...")
         mock = main.generate_mock_result(req)
         print(f"  Generated {len(mock['slides'])} slides")
         
-        print("\n✅ All basic checks passed!")
+        print("\n[SUCCESS] All basic checks passed!")

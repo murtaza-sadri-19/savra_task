@@ -26,7 +26,7 @@ def test_api_endpoints():
         data = response.json()
         assert "status" in data
         assert data["status"] == "ok"
-        print(f"✓ Health endpoint works: {data}")
+        print(f"[PASSED] Health endpoint works: {data}")
     except Exception as e:
         errors.append(f"Health endpoint failed: {e}")
     
@@ -36,7 +36,7 @@ def test_api_endpoints():
         assert response.status_code == 200
         stats = response.json()
         assert "hit_rate_pct" in stats
-        print(f"✓ Cache stats endpoint works: {stats}")
+        print(f"[PASSED] Cache stats endpoint works: {stats}")
     except Exception as e:
         errors.append(f"Cache stats endpoint failed: {e}")
     
@@ -54,7 +54,7 @@ def test_api_endpoints():
         assert "job_id" in job_data
         assert job_data["status"] == "queued"
         job_id = job_data["job_id"]
-        print(f"✓ Job submission works: job_id={job_id}, status={job_data['status']}")
+        print(f"[PASSED] Job submission works: job_id={job_id}, status={job_data['status']}")
         
         # Test 4: Poll job status (with retries for processing)
         max_retries = 10
@@ -63,10 +63,10 @@ def test_api_endpoints():
             assert status_response.status_code == 200
             status_data = status_response.json()
             
-            print(f"  ↳ Status poll #{attempt+1}: {status_data['status']} ({status_data['progress_pct']}%)")
+            print(f"  --> Status poll #{attempt+1}: {status_data['status']} ({status_data['progress_pct']}%)")
             
             if status_data["status"] == "done":
-                print(f"✓ Job completed: result={status_data.get('result', {}).get('title', 'N/A')}")
+                print(f"[PASSED] Job completed: result={status_data.get('result', {}).get('title', 'N/A')}")
                 
                 # Verify result structure
                 result = status_data.get("result")
@@ -74,7 +74,7 @@ def test_api_endpoints():
                     assert "title" in result
                     assert "slides" in result
                     assert result["total_slides"] == len(request_data)
-                    print(f"✓ Result structure valid: {result['total_slides']} slides")
+                    print(f"[PASSED] Result structure valid: {result['total_slides']} slides")
                 break
             
             if status_data["status"] == "failed":
@@ -97,9 +97,9 @@ def test_api_endpoints():
         response = client.post("/api/ppt/generate", json=invalid_request)
         # Should return validation error
         if response.status_code not in [400, 422]:
-            print(f"⚠ Invalid request validation: got {response.status_code} (expected 400/422)")
+            print(f"[WARNING] Invalid request validation: got {response.status_code} (expected 400/422)")
         else:
-            print(f"✓ Invalid request validation works: {response.status_code}")
+            print(f"[PASSED] Invalid request validation works: {response.status_code}")
     except Exception as e:
         errors.append(f"Invalid request handling failed: {e}")
     
@@ -107,7 +107,7 @@ def test_api_endpoints():
     try:
         response = client.get("/api/ppt/status/nonexistent_id")
         assert response.status_code == 404
-        print(f"✓ Job not found handling: 404 returned")
+        print(f"[PASSED] Job not found handling: 404 returned")
     except Exception as e:
         errors.append(f"Job not found handling failed: {e}")
     
@@ -120,25 +120,25 @@ def test_imports():
     
     try:
         from backend.models import PPTRequest, PPTResult, SlideContent, JobResponse, JobStatus
-        print("✓ Models import successful")
+        print("[PASSED] Models import successful")
     except Exception as e:
         errors.append(f"Models import failed: {e}")
     
     try:
         from backend.router import route, compute_complexity_score
-        print("✓ Router import successful")
+        print("[PASSED] Router import successful")
     except Exception as e:
         errors.append(f"Router import failed: {e}")
     
     try:
         from backend.cache import PPTCache, cache
-        print("✓ Cache import successful")
+        print("[PASSED] Cache import successful")
     except Exception as e:
         errors.append(f"Cache import failed: {e}")
     
     try:
         from backend.main import app, generate_mock_result, call_groq_with_fallback
-        print("✓ Main import successful")
+        print("[PASSED] Main import successful")
     except Exception as e:
         errors.append(f"Main import failed: {e}")
     
@@ -164,7 +164,7 @@ def test_env_configuration():
         }
         
         for key, value in config.items():
-            print(f"✓ {key}: {value}")
+            print(f"[CONFIG] {key}: {value}")
         
     except Exception as e:
         errors.append(f"Config loading failed: {e}")
@@ -185,19 +185,19 @@ def main():
     
     print("\n" + "=" * 60)
     if all_errors:
-        print("⚠ ISSUES FOUND:")
+        print("[WARNING] ISSUES FOUND:")
         for i, error in enumerate(all_errors, 1):
             print(f"  {i}. {error}")
         print("=" * 60)
         return 1
     else:
-        print("✅ ALL API TESTS PASSED!")
+        print("[SUCCESS] ALL API TESTS PASSED!")
         print("=" * 60)
         print("\nBackend Status:")
-        print("  ✓ All dependencies importable")
-        print("  ✓ Environment configured correctly")
-        print("  ✓ API endpoints functional")
-        print("  ✓ Request validation working")
+        print("  [PASSED] All dependencies importable")
+        print("  [PASSED] Environment configured correctly")
+        print("  [PASSED] API endpoints functional")
+        print("  [PASSED] Request validation working")
         print("  ✓ Async job processing ready")
         print("  ✓ Caching system operational")
         return 0

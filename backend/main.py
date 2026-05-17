@@ -9,7 +9,7 @@ Key design decisions:
   - Smart routing: complexity score decides 8b vs 70b model
   - Exact cache: SHA-256 hash of request params, 8h TTL
   - Structured JSON output: Groq JSON mode guarantees parseable responses
-  - Graceful degradation: 503/rate-limit → retry with backoff → fallback model
+  - Graceful degradation: 503/rate-limit to retry with backoff to fallback model
 
 Run:
   pip install fastapi uvicorn groq pydantic
@@ -80,7 +80,7 @@ Generate presentation slide content that is:
 - Age-appropriate for the specified grade
 - Aligned with NCERT/CBSE curriculum
 - Comprehensive: 4-6 bullet points per slide, each 15-25 words with detailed explanations
-- Pedagogically structured: concept → definition → examples → real-world applications → key takeaway
+- Pedagogically structured: concept to definition to examples to real-world applications to key takeaway
 - Include practical examples, diagram descriptions, and learning objectives
 
 CRITICAL: Respond ONLY with valid JSON. No markdown, no explanation, no preamble.
@@ -122,7 +122,7 @@ async def call_groq_with_fallback(prompt: str, model: str) -> tuple[str, str]:
     Failure handling:
       Attempt 1: target model
       Attempt 2: target model (backoff 1s)
-      Attempt 3: alternate model (backoff 3s)  ← smart fallback, not just cheaper
+      Attempt 3: alternate model (backoff 3s) - smart fallback, not just cheaper
       Raises if all attempts fail
     """
     models_to_try = [model, model, (FAST_MODEL if model == SMART_MODEL else SMART_MODEL)]

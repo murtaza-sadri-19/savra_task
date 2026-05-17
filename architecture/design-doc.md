@@ -16,14 +16,19 @@ Replace the synchronous Gemini-backed PPT generator with an async job system on 
 
 ### Current Architecture (The Problem)
 
-```
-Teacher → HTTP POST → Backend → Gemini 3.1 Pro → template injection → .PPTX
-                  ↑ teacher blocked here, waiting up to 2+ minutes
-```
+Current Flow:
+  Teacher submits form
+  -> Backend receives POST request
+  -> Backend calls Gemini 3.1 Pro API
+  -> Gemini generates content
+  -> Template injection creates PPTX
+  -> File returned to teacher
+  
+  [Teacher is blocked here, waiting up to 2+ minutes]
 
 **Why this breaks at scale:**
 - Synchronous: one teacher's slow request blocks their entire session
-- No retry intelligence — 503 → fallback → quality degrades, teacher still waits
+- No retry intelligence — 503 errors fall back to lower-quality models, teacher still waits
 - No caching — identical topic requests hit the LLM every single time
 - Single LLM, single cost tier — Grade 3 "Animals" costs the same as Grade 12 "Organic Chemistry"
 
@@ -31,55 +36,32 @@ Teacher → HTTP POST → Backend → Gemini 3.1 Pro → template injection → 
 
 ### Proposed Architecture
 
-```
-                     ┌─────────────────────────────────────────────────┐
-                     │                   FRONTEND                       │
-                     │  Submit form → get job_id → poll every 2s       │
-                     │  Progress bar: Queued → Routing → Generating     │
-                     └───────────────────┬─────────────────────────────┘
-                                         │ POST /api/ppt/generate
-                                         ▼
-                     ┌─────────────────────────────────────────────────┐
-                     │              FastAPI Backend                     │
-                     │                                                  │
-                     │  1. Validate request (Pydantic)                  │
-                     │  2. Return job_id immediately (202 Accepted)     │
-                     │  3. Enqueue background task                      │
-                     └─────────┬──────────────────────────────────────┘
-                               │ Background Task
-                               ▼
-              ┌────────────────────────────────────────┐
-              │           Job Processor                │
-              │                                        │
-              │  ┌──────────────────────────────────┐  │
-              │  │   1. Smart Router                │  │
-              │  │   complexity_score(topic,grade,  │  │
-              │  │   slides,subject) → model choice │  │
-              │  └──────────┬───────────────────────┘  │
-              │             │                           │
-              │  ┌──────────▼───────────────────────┐  │
-              │  │   2. Cache Check (SHA-256 key)   │  │
-              │  │   HIT → return instantly (₹0)   │  │
-              │  │   MISS → proceed to LLM         │  │
-              │  └──────────┬───────────────────────┘  │
-              │             │ MISS only                 │
-              │  ┌──────────▼───────────────────────┐  │
-              │  │   3. Groq API Call               │  │
-              │  │   JSON mode → guaranteed parse   │  │
-              │  │   Retry: model A → A → B         │  │
-              │  └──────────┬───────────────────────┘  │
-              │             │                           │
-              │  ┌──────────▼───────────────────────┐  │
-              │  │   4. Validate + Store Result     │  │
-              │  │   Update job status → DONE       │  │
-              │  └──────────────────────────────────┘  │
-              └────────────────────────────────────────┘
-                               │
-                               ▼
-              Teacher polls GET /api/ppt/status/{job_id}
-              → Progress updates in real-time
-              → Full result on completion
-```
+New Flow (Async Job Pattern):
+
+  FRONTEND:
+  - Submit form to POST /api/ppt/generate
+  - Receive job_id immediately (in < 50ms)
+  - Poll status every 2 seconds
+  - Progress bar shows: Queued -> Routing -> Generating -> Done
+  
+  BACKEND:
+  1. Validate request (Pydantic)
+  2. Return job_id immediately (202 Accepted status)
+  3. Enqueue background task
+  
+  BACKGROUND JOB PROCESSOR:
+  1. Smart Router: Score complexity, choose model (8B or 70B)
+  2. Cache Check: SHA-256 key lookup
+     - HIT: Return instantly, cost = ₹0
+     - MISS: Proceed to LLM call
+  3. Groq API Call: JSON mode ensures valid output, Retry strategy (model A, model A, model B)
+  4. Validate and Store: Update job status to DONE
+  
+  Result:
+  - Teacher polls GET /api/ppt/status/{job_id}
+  - Receives progress updates in real-time
+  - Gets full result on completion
+
 
 ### Request Flow (Happy Path)
 
@@ -181,14 +163,13 @@ This is the worst kind of failure: **silent degradation**.
 
 ### Proposed Failure Hierarchy
 
-```
-Attempt 1:  Target model (8b or 70b based on routing)
-Attempt 2:  Same model, 1s backoff (transient 503 recovery)
-Attempt 3:  Alternate model, 3s backoff (actual fallback, same quality tier if possible)
-Failure:    Job marked FAILED with clear message + retry option for teacher
-```
+Retry Strategy (in sequence):
+  1. Attempt 1: Target model (8B or 70B based on routing decision)
+  2. Attempt 2: Same model with 1 second backoff (transient 503 recovery)
+  3. Attempt 3: Alternate model with 3 second backoff (actual fallback to opposite tier)
+  4. Failure: Job marked FAILED with clear message and retry option for teacher
 
-**Key principle**: Never silently degrade. If we fall back to a different model, we log it and optionally show the teacher "Generated with fallback model — quality may vary." Honest > quiet failure.
+**Key principle**: Never silently degrade. If we fall back to a different model, we log it and optionally show the teacher "Generated with fallback model — quality may vary." Honest failures are better than quiet ones.
 
 ### Fallback Model Choice
 

@@ -1,6 +1,6 @@
 # Savra PPT Generator — Full-Stack Assignment
 
-## Status: ✅ PRODUCTION READY
+## Status: [PRODUCTION READY]
 
 ### What I Built
 
@@ -12,25 +12,25 @@ A redesigned PPT generation system tackling Savra's core problems: cost, reliabi
 
 ### Verification Status
 
-✅ **Backend Logic**: 32/32 unit + integration tests passed  
-✅ **API Endpoints**: 6/6 endpoints verified working  
-✅ **Groq Integration**: Authentication resolved, real API calls succeeding  
-✅ **First Generation**: Job completed in 1.37s with ₹0.0209 cost (99.9% savings)  
-✅ **Smart Routing**: Complexity scoring algorithm validated  
-✅ **Caching**: TTL enforcement and statistics working  
-✅ **Frontend Ready**: Port 5173 can submit real requests to backend on port 8000
+[PASSED] Backend Logic: 32/32 unit + integration tests passed  
+[PASSED] API Endpoints: 6/6 endpoints verified working  
+[PASSED] Groq Integration: Authentication resolved, real API calls succeeding  
+[PASSED] First Generation: Job completed in 1.37s with ₹0.0209 cost (99.9% savings)  
+[PASSED] Smart Routing: Complexity scoring algorithm validated  
+[PASSED] Caching: TTL enforcement and statistics working  
+[PASSED] Frontend Ready: Port 5173 can submit real requests to backend on port 8000
 
 ## Architecture Notes
 
 **Scope of Implementation**:
-- ✅ Smart model routing algorithm
-- ✅ Async job processing pattern  
-- ✅ Exact-match caching with TTL
-- ✅ Groq API integration with retry logic
-- ⏳ Real PPTX file output (currently returns JSON + structured slides)
-- ⏳ Redis / persistent job store (in-memory dict used in current implementation)
-- ⏳ Authentication / JWT (no auth in current prototype)
-- ⏳ Semantic caching (content-aware deduplication)
+- [DONE] Smart model routing algorithm
+- [DONE] Async job processing pattern  
+- [DONE] Exact-match caching with TTL
+- [DONE] Groq API integration with retry logic
+- [PENDING] Real PPTX file output (currently returns JSON + structured slides)
+- [PENDING] Redis / persistent job store (in-memory dict used in current implementation)
+- [PENDING] Authentication / JWT (no auth in current prototype)
+- [PENDING] Semantic caching (content-aware deduplication)
 
 **Production Considerations**:
 - In-memory job store doesn't persist across restarts. For production, migrate to Redis.
